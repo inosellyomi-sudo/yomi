@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YOMI精度診断ツール</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Sans','Noto Sans JP','YuGothic',sans-serif;background:#0f172a;color:#f1f5f9;min-height:100vh}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#1e293b}::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+.header{background:linear-gradient(90deg,#1e40af,#3b82f6);padding:16px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;box-shadow:0 4px 24px #0008}
+.header-icon{width:42px;height:42px;background:#fff2;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.header-title{font-size:18px;font-weight:800;color:#fff}
+.header-sub{font-size:11px;color:#93c5fd;margin-top:2px}
+.back-btn{background:#fff2;border:none;color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit}
+.back-btn:hover{background:#fff3}
+.container{max-width:740px;margin:0 auto;padding:28px 20px 80px}
+.btn-primary{width:100%;padding:14px;border-radius:12px;background:linear-gradient(90deg,#1d4ed8,#3b82f6);color:#fff;font-weight:800;font-size:15px;border:none;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px #3b82f640}
+.btn-primary:disabled{background:#334155;box-shadow:none;cursor:not-allowed}
+.btn-green{background:linear-gradient(90deg,#065f46,#10b981)!important}
+.btn-purple{background:linear-gradient(90deg,#4c1d95,#7c3aed)!important}
+.btn-dashed{width:100%;padding:10px;border-radius:8px;background:none;border:1.5px dashed #334155;color:#60a5fa;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;margin-bottom:14px}
+.btn-dashed:hover{border-color:#60a5fa}
+.card{background:#1e293b;border-radius:16px;padding:24px 22px;border:1px solid #334155;margin-bottom:16px}
+.section-title{font-size:14px;font-weight:800;color:#60a5fa;margin:24px 0 14px;border-bottom:1px solid #334155;padding-bottom:9px}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:6px}
+.hint{font-size:11px;color:#64748b;margin-bottom:6px}
+.req{color:#f87171;margin-left:4px}
+input[type=text],input[type=number],input[type=datetime-local],input[type=date],textarea,select{
+  width:100%;background:#0f172a;border:1.5px solid #334155;border-radius:8px;
+  padding:9px 11px;font-size:13px;color:#f1f5f9;outline:none;
+  font-family:inherit;line-height:1.6;transition:border-color 0.2s}
+input:focus,textarea:focus,select:focus{border-color:#3b82f6}
+textarea{resize:vertical}
+select option{background:#1e293b}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.check-group{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.check-item{display:flex;align-items:center;gap:7px;padding:8px 13px;border:1.5px solid #334155;border-radius:8px;cursor:pointer;font-size:13px;color:#94a3b8;background:#0f172a;transition:all 0.2s;user-select:none}
+.check-item.on{border-color:#3b82f6;color:#3b82f6;background:#3b82f614}
+.check-box{width:16px;height:16px;border:1.5px solid #475569;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;transition:all 0.2s}
+.check-item.on .check-box{background:#3b82f6;border-color:#3b82f6;color:#fff}
+.target-block{background:#0f172a;border-radius:10px;padding:14px;border:2px solid #10b981;margin-top:10px;margin-bottom:4px}
+.target-block-title{font-size:12px;font-weight:800;color:#10b981;margin-bottom:10px}
+.cp-block{background:#0f172a;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #334155}
+.cp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.cp-num{color:#94a3b8;font-size:12px;font-weight:700}
+.cp-del{background:none;border:none;color:#64748b;cursor:pointer;font-size:16px;padding:2px 6px}
+.cp-del:hover{color:#ef4444}
+.sub-label{font-size:11px;color:#94a3b8;margin-bottom:4px}
+.task-block{background:#0f172a;border-radius:10px;padding:14px;border:1px solid #1d4ed8;margin-bottom:10px}
+.error-box{background:#450a0a;border:1px solid #fca5a5;border-radius:8px;padding:11px 14px;color:#fca5a5;font-size:13px;margin-bottom:14px}
+.case-card{background:#1e293b;border-radius:14px;padding:16px 18px;margin-bottom:12px;cursor:pointer;border:1.5px solid #334155;display:flex;align-items:center;gap:14px;transition:border-color 0.2s}
+.case-card:hover{border-color:#60a5fa}
+.case-info{flex:1;min-width:0}
+.delete-btn{background:none;border:none;color:#64748b;cursor:pointer;font-size:18px;padding:4px;flex-shrink:0}
+.delete-btn:hover{color:#ef4444}
+.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px;margin:0 3px 3px 0}
+.tabs{display:flex;background:#1e293b;border-bottom:1px solid #334155}
+.tab-btn{flex:1;padding:11px 4px;border:none;background:none;color:#94a3b8;font-weight:700;font-size:12px;cursor:pointer;border-bottom:3px solid transparent;font-family:inherit;transition:all 0.2s}
+.tab-btn.active{background:#1d4ed8;color:#fff;border-bottom-color:#60a5fa}
+.grade-badge{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;flex-shrink:0}
+.score-bar-wrap{margin-top:5px}
+.score-bar-row{display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-bottom:3px}
+.score-bar-bg{background:#e5e7eb;border-radius:99px;height:7px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:99px;transition:width 0.8s}
+.item-card{border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;background:#fff;border:1.5px solid #eee}
+.item-header{display:flex;align-items:center;gap:8px}
+.item-num{font-weight:800;font-size:12px;border-radius:5px;padding:1px 7px}
+.item-name{font-weight:700;font-size:13px;flex:1;color:#1f2937}
+.item-arrow{color:#9ca3af;font-size:13px}
+.item-comment{background:#f9fafb;border-radius:7px;padding:9px 11px;margin:10px 0 7px}
+.item-comment-ttl{font-size:10px;font-weight:800;color:#6b7280;margin-bottom:3px}
+.item-comment-body{font-size:12px;color:#374151;line-height:1.9;white-space:pre-wrap}
+.item-action{background:#fffbeb;border:1px solid #fcd34d;border-radius:7px;padding:9px 11px}
+.item-action-ttl{font-size:10px;font-weight:800;color:#92400e;margin-bottom:3px}
+.item-action-body{font-size:12px;color:#78350f;line-height:1.7}
+.info-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #1e293b}
+.info-label{color:#64748b;font-size:12px;min-width:140px;flex-shrink:0}
+.info-val{color:#e2e8f0;font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-all}
+.log-card{background:#1e293b;border-radius:12px;padding:13px 15px;margin-bottom:9px}
+.log-meta{font-size:11px;color:#64748b;margin-bottom:5px}
+.log-text{font-size:13px;color:#e2e8f0;line-height:1.7}
+.empty-msg{text-align:center;color:#475569;padding:32px 0;font-size:13px}
+.empty-list{text-align:center;color:#475569;padding:60px 0;font-size:14px}
+.score-summary{background:#1e293b;padding:18px 20px;border-bottom:1px solid #334155}
+.priority-box{background:#0f172a;border-radius:10px;padding:11px 14px;border:1px solid #1d4ed8;margin-top:12px}
+.priority-label{font-size:11px;font-weight:800;color:#60a5fa;margin-bottom:3px}
+.priority-text{font-size:13px;color:#bfdbfe;font-weight:600}
+.gas-banner{background:#1c1917;border:1.5px solid #f59e0b;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.gas-banner.ok{background:#052e16;border-color:#10b981}
+.gas-banner-text{flex:1;font-size:12px;color:#fcd34d}
+.gas-banner.ok .gas-banner-text{color:#4ade80}
+.gas-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.gas-status-dot.ok{background:#10b981}
+.gas-status-dot.ng{background:#f59e0b;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.sheet-btn{display:inline-flex;align-items:center;gap:5px;background:#1a5276;border:1px solid #2980b9;color:#85c1e9;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none}
+.fb-templates{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.fb-tmpl{padding:6px 11px;border:1px solid #334155;border-radius:6px;font-size:12px;color:#94a3b8;cursor:pointer;background:#0f172a}
+.fb-tmpl:hover{border-color:#7c3aed;color:#a78bfa}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const STORAGE_KEY="yomi_v10";
+const PHASES=["","応募","書類","1次調整中","1次面接","1次結果待ち","2次面接","2次結果待ち","最終面接","最終結果待ち","内定","オファー面談","内定承諾期限","選考終了"];
+const NAITEI_PCT=["","100%","75%","50%","25%"];
+const GRADE={S:{bg:"#10b981",label:"高確度"},A:{bg:"#3b82f6",label:"問題なし"},B:{bg:"#f59e0b",label:"要注意"},C:{bg:"#f97316",label:"要介入"},D:{bg:"#ef4444",label:"緊急対応"}};
+const SC={good:"#10b981",warning:"#f59e0b",danger:"#ef4444"};
+const SL={good:"✓ 良好",warning:"△ 要確認",danger:"✗ 要対応"};
+const CONSULTANTS_LIST=["家族","配偶者","パートナー（彼氏・彼女）","職場の先輩（離職済み含む）","友人"];
+const NAITEI_CHECKS=["記述者（コンサルタント）自身が内定が出るかわかっていない","面接パフォーマンスが低いと感じる","それ以外に懸念がある"];
+const FB_TEMPLATES=["応諾設計を見直すこと","競合状況を再確認すること","初回面談の深掘りが不足","年収ラインの再確認が必要","ハードル解除を優先すること","動機付けを強化すること","候補者の温度感が低下している可能性あり","タスクを期日内に実行すること"];
+function genMonths(){const o=[""],n=new Date();for(let i=0;i<12;i++){const d=new Date(n.getFullYear(),n.getMonth()+i,1);o.push(`${d.getFullYear()}年${d.getMonth()+1}月`);}return o;}
+const MONTHS=genMonths();
+
+let GAS_URL=localStorage.getItem("yomi_gas_url")||"";
+
+function emptyForm(){const n=new Date(),p=v=>String(v).padStart(2,"0");return{recordDate:`${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}T${p(n.getHours())}:${p(n.getMinutes())}`,consultant:"",candidate:"",age:"",gender:"",familyStatus:"",familyMemo:"",currentCompany:"",currentJob:"",totalSalary:"",monthlySalary:"",bonus:"",experience:"",reason:"",values:"",proposedCompanies:"",targetCompany:"",targetPosition:"",targetPhase:"",targetMonth:"",temperature:"",c1_consultants:[],c1_detail:"",c2:"",c3:"",c4:"",c5_checks:[],c5_detail:"",cp:[{company:"",position:"",route:"",phase:"",expectedSalary:"",naiPct:"",execDate:"",infoDate:""}],task:{taskDesc:"",deadline:"",goalState:"",support:""},memo:""};}
+function nowStr(){return new Date().toLocaleString("ja-JP",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"})}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function loadCases(){try{const r=localStorage.getItem(STORAGE_KEY);return r?JSON.parse(r):[]}catch{return[]}}
+function saveCases(c){state.cases=c;try{localStorage.setItem(STORAGE_KEY,JSON.stringify(c))}catch{}}
+
+let state={view:"list",cases:loadCases(),selId:null,loading:false,error:"",fbTab:"detail",updateLog:"",fbText:"",fbAuthor:localStorage.getItem("yomi_fb_author")||"",openItems:{},form:emptyForm(),showGasSetup:false,gasUrlInput:GAS_URL};
+
+function render(){document.getElementById("app").innerHTML=state.view==="list"?renderList():state.view==="new"?renderNew():renderDetail();}
+
+async function callGas(action,payload){
+  if(!GAS_URL)throw new Error("GAS URL未設定");
+  const res=await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action,payload})});
+  return await res.json();
+}
+
+// ===== 一覧 =====
+function renderList(){
+  const gasOk=!!GAS_URL;
+  const banner=`<div class="gas-banner ${gasOk?"ok":""}">
+    <div class="gas-status-dot ${gasOk?"ok":"ng"}"></div>
+    <div class="gas-banner-text">${gasOk?`✅ Googleスプレッドシート連携中 &nbsp;<button class="sheet-btn" onclick="openSheet()">📊 シートを開く</button>`:"⚠️ GAS URLを設定してください"}</div>
+    <button onclick="toggleGasSetup()" style="background:#334155;border:none;color:#94a3b8;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;font-family:inherit">${gasOk?"変更":"設定"}</button>
+  </div>`;
+  const setup=state.showGasSetup?`<div class="card" style="margin-bottom:16px">
+    <div style="font-size:13px;font-weight:800;color:#f59e0b;margin-bottom:10px">⚙️ GAS URL設定</div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="gas-url-input" value="${esc(state.gasUrlInput)}" placeholder="https://script.google.com/macros/s/...">
+      <button onclick="saveGasUrl()" style="background:#1d4ed8;border:none;color:#fff;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap">保存</button>
+    </div>
+  </div>`:"";
+  const cards=state.cases.length===0?'<div class="empty-list">まだ案件がありません。<br>上のボタンから始めてください。</div>':state.cases.map(c=>{
+    const g=GRADE[c.diagnosis?.grade]||GRADE.D;
+    const tags=[`<span class="tag" style="background:${g.bg}22;color:${g.bg};border:1px solid ${g.bg}44">${c.diagnosis?.grade} ${g.label}</span>`,`<span class="tag" style="background:#60a5fa22;color:#60a5fa;border:1px solid #60a5fa44">${esc(c.formData.consultant)}</span>`,c.updates?.length?`<span class="tag" style="background:#34d39922;color:#34d399;border:1px solid #34d39944">更新 ${c.updates.length}件</span>`:"",c.feedbacks?.length?`<span class="tag" style="background:#a78bfa22;color:#a78bfa;border:1px solid #a78bfa44">FB ${c.feedbacks.length}件</span>`:""].join("");
+    const prof=[c.formData.age?c.formData.age+"歳":"",c.formData.gender,c.formData.currentCompany,c.formData.currentJob].filter(Boolean).join(" / ");
+    return`<div class="case-card" onclick="openDetail('${c.id}')">
+      ${badge(c.diagnosis?.grade,52)}
+      <div class="case-info">
+        <div style="font-weight:800;font-size:15px;color:#f1f5f9">${esc(c.formData.candidate)}</div>
+        <div style="margin:4px 0">${tags}</div>
+        <div style="color:#94a3b8;font-size:12px">${esc(prof)}</div>
+        <div style="color:#64748b;font-size:11px;margin-top:2px">${c.diagnosis?.totalScore}点 ／ ${c.createdAt}</div>
+      </div>
+      <button class="delete-btn" onclick="event.stopPropagation();deleteCase('${c.id}')">🗑</button>
+    </div>`;
+  }).join("");
+  return`${hdr("案件一覧")}<div class="container">${banner}${setup}<button class="btn-primary" style="margin-bottom:20px" onclick="goNew()">＋ 新しい案件を診断する</button>${cards}</div>`;
+}
+
+// ===== 新規入力 =====
+function renderNew(){
+  const f=state.form;
+  const gOpts=["","男性","女性","その他"].map(v=>`<option value="${esc(v)}" ${f.gender===v?"selected":""}>${v||"選択してください"}</option>`).join("");
+  const fOpts=["","未婚・独身","同棲中","既婚・子なし","既婚・子あり","離婚・子あり"].map(v=>`<option value="${esc(v)}" ${f.familyStatus===v?"selected":""}>${v||"選択してください"}</option>`).join("");
+  const tpOpts=PHASES.map(ph=>`<option value="${esc(ph)}" ${f.targetPhase===ph?"selected":""}>${esc(ph)||"フェーズを選択"}</option>`).join("");
+  const tmOpts=MONTHS.map(m=>`<option value="${esc(m)}" ${f.targetMonth===m?"selected":""}>${m||"年月を選択"}</option>`).join("");
+  const c1c=CONSULTANTS_LIST.map(n=>{const on=f.c1_consultants.includes(n);return`<div class="check-item ${on?"on":""}" onclick="toggleC1('${n}')"><div class="check-box">${on?"✓":""}</div>${esc(n)}</div>`;}).join("");
+  const c5c=NAITEI_CHECKS.map(n=>{const on=f.c5_checks.includes(n);return`<div class="check-item ${on?"on":""}" onclick="toggleC5('${n}')"><div class="check-box">${on?"✓":""}</div>${esc(n)}</div>`;}).join("");
+  const cpR=f.cp.map((p,i)=>{
+    const phO=PHASES.map(ph=>`<option value="${esc(ph)}" ${p.phase===ph?"selected":""}>${esc(ph)||"フェーズ"}</option>`).join("");
+    const pcO=NAITEI_PCT.map(v=>`<option value="${esc(v)}" ${p.naiPct===v?"selected":""}>${esc(v)||"内定可能性"}</option>`).join("");
+    return`<div class="cp-block"><div class="cp-head"><span class="cp-num">競合 ${i+1}</span>${i>0?`<button class="cp-del" onclick="delCp(${i})">✕</button>`:""}</div>
+      <div class="grid2" style="margin-bottom:8px"><div><div class="sub-label">企業名</div><input type="text" value="${esc(p.company)}" oninput="setCp(${i},'company',this.value)" placeholder="例：A社"></div><div><div class="sub-label">ポジション</div><input type="text" value="${esc(p.position)}" oninput="setCp(${i},'position',this.value)" placeholder="例：営業MG"></div></div>
+      <div class="grid2" style="margin-bottom:8px"><div><div class="sub-label">応募経路</div><input type="text" value="${esc(p.route)}" oninput="setCp(${i},'route',this.value)" placeholder="例：リクルート"></div><div><div class="sub-label">フェーズ</div><select onchange="setCp(${i},'phase',this.value)">${phO}</select></div></div>
+      <div class="grid2" style="margin-bottom:8px"><div><div class="sub-label">想定年収</div><input type="text" value="${esc(p.expectedSalary)}" oninput="setCp(${i},'expectedSalary',this.value)" placeholder="例：600万円"></div><div><div class="sub-label">内定可能性</div><select onchange="setCp(${i},'naiPct',this.value)">${pcO}</select></div></div>
+      <div class="grid2"><div><div class="sub-label">実施日</div><input type="date" value="${esc(p.execDate)}" onchange="setCp(${i},'execDate',this.value)"></div><div><div class="sub-label">情報取得日</div><input type="date" value="${esc(p.infoDate)}" onchange="setCp(${i},'infoDate',this.value)"></div></div>
+    </div>`;
+  }).join("");
+  const t=f.task;
+  return`${hdr("新規案件入力",true)}<div class="container"><div class="card">
+  <div class="hint" style="margin-bottom:18px">＊は必須項目です。</div>
+  <div class="section-title">📋 基本情報</div>
+  <div class="field"><label>記入日時<span class="req">*</span></label><input type="datetime-local" value="${f.recordDate}" onchange="sf('recordDate',this.value)"></div>
+  <div class="grid2"><div class="field"><label>担当コンサルタント<span class="req">*</span></label><input type="text" value="${esc(f.consultant)}" oninput="sf('consultant',this.value)" placeholder="例：石井"></div><div class="field"><label>候補者氏名<span class="req">*</span></label><input type="text" value="${esc(f.candidate)}" oninput="sf('candidate',this.value)" placeholder="例：山田 太郎"></div></div>
+  <div class="grid3"><div class="field"><label>年齢</label><input type="number" value="${esc(f.age)}" oninput="sf('age',this.value)" placeholder="32" min="18" max="70"></div><div class="field"><label>性別</label><select onchange="sf('gender',this.value)">${gOpts}</select></div><div class="field"><label>家族・交際状況</label><select onchange="sf('familyStatus',this.value)">${fOpts}</select></div></div>
+  <div class="field"><label>家族・交際状況メモ</label><textarea rows="2" oninput="sf('familyMemo',this.value)" placeholder="例：来年結婚予定／配偶者が心配している">${esc(f.familyMemo)}</textarea></div>
+  <div class="section-title">🏢 現職情報</div>
+  <div class="field"><label>現職社名<span class="req">*</span></label><input type="text" value="${esc(f.currentCompany)}" oninput="sf('currentCompany',this.value)" placeholder="例：株式会社〇〇"></div>
+  <div class="field"><label>現職・職種</label><input type="text" value="${esc(f.currentJob)}" oninput="sf('currentJob',this.value)" placeholder="例：メーカー営業"></div>
+  <div class="field"><label>合計年収</label><input type="text" value="${esc(f.totalSalary)}" oninput="sf('totalSalary',this.value)" placeholder="例：550万円"></div>
+  <div class="grid2"><div class="field"><label>月給（固定給）</label><input type="text" value="${esc(f.monthlySalary)}" oninput="sf('monthlySalary',this.value)" placeholder="例：35万円"></div><div class="field"><label>賞与</label><input type="text" value="${esc(f.bonus)}" oninput="sf('bonus',this.value)" placeholder="例：夏冬各2ヶ月"></div></div>
+  <div class="field"><label>経歴・強み</label><textarea rows="2" oninput="sf('experience',this.value)" placeholder="例：新規営業5年、年間120%達成3期連続">${esc(f.experience)}</textarea></div>
+  <div class="section-title">💡 転職意向</div>
+  <div class="field"><label>転職動機・背景<span class="req">*</span></label><textarea rows="3" oninput="sf('reason',this.value)" placeholder="例：上司との関係、年収アップ希望">${esc(f.reason)}</textarea></div>
+  <div class="field"><label>意思決定軸・重視する条件<span class="req">*</span></label><textarea rows="2" oninput="sf('values',this.value)" placeholder="例：年収600万以上、フルリモート可">${esc(f.values)}</textarea></div>
+  <div class="section-title">🎯 応諾・提案</div>
+  <div class="field"><label>応諾企業・提案企業<span class="req">*</span></label><textarea rows="2" oninput="sf('proposedCompanies',this.value)" placeholder="例：プレックス（一次通過）、SMS（応諾済み）">${esc(f.proposedCompanies)}</textarea></div>
+  <div class="target-block"><div class="target-block-title">⭐ 想定成約企業</div>
+    <div class="field" style="margin-bottom:10px"><div class="sub-label">企業名</div><input type="text" value="${esc(f.targetCompany)}" oninput="sf('targetCompany',this.value)" placeholder="例：プレックス"></div>
+    <div class="grid3"><div><div class="sub-label">ポジション</div><input type="text" value="${esc(f.targetPosition)}" oninput="sf('targetPosition',this.value)" placeholder="例：営業MG"></div><div><div class="sub-label">フェーズ</div><select onchange="sf('targetPhase',this.value)">${tpOpts}</select></div><div><div class="sub-label">成約予定年月</div><select onchange="sf('targetMonth',this.value)">${tmOpts}</select></div></div>
+  </div>
+  <div class="field" style="margin-top:14px"><label>現在の温度感・確度<span class="req">*</span></label><textarea rows="2" oninput="sf('temperature',this.value)" placeholder="例：A（来月入社可）、プレックスが第一志望">${esc(f.temperature)}</textarea></div>
+  <div class="section-title">⚠️ ハードルの把握</div>
+  <div class="field"><label>①家族（友人等）ハードルの把握</label><div class="hint">相談している人（複数選択可）</div><div class="check-group">${c1c}</div><textarea rows="2" oninput="sf('c1_detail',this.value)" placeholder="どのような人か／どのような反応か">${esc(f.c1_detail)}</textarea></div>
+  <div class="field"><label>②他社ハードルの把握</label><textarea rows="2" oninput="sf('c2',this.value)" placeholder="他社の志望度・弊害企業はあるか（理由も記述）">${esc(f.c2)}</textarea></div>
+  <div class="field"><label>③年収ハードルの把握</label><textarea rows="2" oninput="sf('c3',this.value)" placeholder="例：現職550万→600万以上希望だが不安">${esc(f.c3)}</textarea></div>
+  <div class="field"><label>④現職慰留ハードルの把握</label><textarea rows="2" oninput="sf('c4',this.value)" placeholder="例：上司から昇格の話が出ている">${esc(f.c4)}</textarea></div>
+  <div class="field"><label>⑤内定はお届けできるのか</label><div class="hint">当てはまるものをすべて選択</div><div class="check-group">${c5c}</div><textarea rows="3" oninput="sf('c5_detail',this.value)" placeholder="それ以外の懸念・所感を自由記述">${esc(f.c5_detail)}</textarea></div>
+  <div class="section-title">🔍 競合他社の進捗</div>
+  ${cpR}<button class="btn-dashed" onclick="addCp()">＋ 競合を追加</button>
+  <div class="section-title">✅ 成約確度を上げるためのタスク</div>
+  <div class="task-block">
+    <div class="field" style="margin-bottom:12px"><label>やらなければならないタスクと期日</label>
+      <div class="grid2" style="margin-top:6px;gap:10px"><textarea rows="3" oninput="st('taskDesc',this.value)" placeholder="例：プレックスの魅力を再説明する">${esc(t.taskDesc)}</textarea><div><div class="sub-label" style="margin-bottom:6px">期日</div><input type="date" value="${esc(t.deadline)}" onchange="st('deadline',this.value)"></div></div>
+    </div>
+    <div class="field" style="margin-bottom:12px"><label>どのような状態になったら◎か</label><textarea rows="2" oninput="st('goalState',this.value)" placeholder="例：来月中に内定受諾できる状態">${esc(t.goalState)}</textarea></div>
+    <div class="field" style="margin-bottom:0"><label>そのためにできること／協力者</label><textarea rows="2" oninput="st('support',this.value)" placeholder="例：唐澤さんに同席してもらう">${esc(t.support)}</textarea></div>
+  </div>
+  <div class="field" style="margin-top:8px"><label>補足メモ</label><textarea rows="3" oninput="sf('memo',this.value)" placeholder="例：レスポンスが遅いのが気になっている／時間にルーズ">${esc(f.memo)}</textarea></div>
+  ${state.error?`<div class="error-box">${esc(state.error)}</div>`:""}
+  <button class="btn-primary" onclick="diagnose()" ${state.loading?"disabled":""}>
+    ${state.loading?"🔍 AI診断中（20〜30秒かかります）...":"🎯 YOMI精度を診断する"}
+  </button>
+</div></div>`;
+}
+
+// ===== 詳細 =====
+function renderDetail(){
+  const c=state.cases.find(x=>x.id===state.selId);
+  if(!c)return renderList();
+  const fd=c.formData;
+  const tabContent=()=>{
+    if(state.fbTab==="detail"){
+      return(c.diagnosis?.items||[]).map((item,i)=>{const open=state.openItems[i];return`<div class="item-card" style="border-left:4px solid ${SC[item.status]}" onclick="toggleItem(${i})"><div class="item-header"><span class="item-num" style="background:${SC[item.status]}18;color:${SC[item.status]}">${i+1}</span><span class="item-name">${esc(item.name)}</span><span class="item-arrow">${open?"▲":"▼"}</span></div>${sbar(item.score,item.max,item.status)}${open?`<div class="item-comment"><div class="item-comment-ttl">📋 診断コメント</div><div class="item-comment-body">${esc(item.comment)}</div></div>${item.status!=="good"?`<div class="item-action"><div class="item-action-ttl">⚡ 改善アクション</div><div class="item-action-body">${esc(item.action)}</div></div>`:""}`:""}`;}).join("")+"</div>".repeat(0);
+    }
+    if(state.fbTab==="info"){
+      const ir=(l,v)=>v?`<div class="info-row"><span class="info-label">${l}</span><span class="info-val">${esc(v)}</span></div>`:"";
+      const cpR=(fd.cp||[]).filter(p=>p.company||p.phase).map((p,i)=>`<div style="background:#0f172a;border-radius:8px;padding:9px 12px;margin-bottom:7px"><div style="font-weight:700;color:#e2e8f0;font-size:13px;margin-bottom:4px">${i+1}. ${esc(p.company)||"未記入"}　${esc(p.position)||""}</div><div style="font-size:12px;color:#94a3b8">経路：${esc(p.route)||"-"}　フェーズ：${esc(p.phase)||"-"}　想定年収：${esc(p.expectedSalary)||"-"}　内定可能性：${esc(p.naiPct)||"-"}<br>実施日：${esc(p.execDate)||"-"}　取得日：${esc(p.infoDate)||"-"}</div></div>`).join("")||'<div style="color:#64748b;font-size:12px">記録なし</div>';
+      const t=fd.task||{};const c1t=(fd.c1_consultants||[]).length?`相談者：${fd.c1_consultants.join("、")}\n${fd.c1_detail||""}`:(fd.c1_detail||"");const c5t=(fd.c5_checks||[]).length?`${fd.c5_checks.join("、")}\n${fd.c5_detail||""}`:(fd.c5_detail||"");const prof=[fd.age?fd.age+"歳":"",fd.gender,fd.familyStatus].filter(Boolean).join(" / ");const tgt=[fd.targetCompany,fd.targetPosition,fd.targetPhase,fd.targetMonth?`成約予定：${fd.targetMonth}`:""].filter(Boolean).join("　");
+      return`<div class="card">${ir("記入日時",fd.recordDate?.replace("T"," "))}${ir("担当コンサル",fd.consultant)}${ir("候補者",fd.candidate)}${ir("年齢・性別・家族",prof)}${ir("家族状況メモ",fd.familyMemo)}${ir("現職社名",fd.currentCompany)}${ir("現職・職種",fd.currentJob)}${ir("合計年収",fd.totalSalary)}${ir("月給",fd.monthlySalary)}${ir("賞与",fd.bonus)}${ir("経歴・強み",fd.experience)}${ir("転職動機",fd.reason)}${ir("意思決定軸",fd.values)}${ir("応諾・提案企業",fd.proposedCompanies)}${ir("⭐ 想定成約企業",tgt)}${ir("温度感・確度",fd.temperature)}<div style="font-size:13px;font-weight:800;color:#60a5fa;margin:14px 0 8px">⚠️ ハードル</div>${ir("①家族",c1t)}${ir("②他社",fd.c2)}${ir("③年収",fd.c3)}${ir("④現職慰留",fd.c4)}${ir("⑤内定可否",c5t)}<div style="font-size:13px;font-weight:800;color:#60a5fa;margin:14px 0 8px">🔍 競合</div>${cpR}<div style="font-size:13px;font-weight:800;color:#60a5fa;margin:14px 0 8px">✅ タスク</div>${ir("タスクと期日",t.taskDesc?(t.taskDesc+(t.deadline?" （期日："+t.deadline+")":"")):"" )}${ir("◎の状態",t.goalState)}${ir("協力者",t.support)}${ir("補足メモ",fd.memo)}<div style="color:#475569;font-size:11px;margin-top:14px">診断記録: ${c.createdAt}</div></div>`;
+    }
+    if(state.fbTab==="update"){
+      const logs=(c.updates||[]).slice().reverse().map(u=>`<div class="log-card" style="border-left:4px solid #10b981"><div class="log-meta">🕐 ${u.at}</div><div class="log-text">${esc(u.text)}</div></div>`).join("")||'<div class="empty-msg">まだ更新記録はありません</div>';
+      return`<div class="card"><div style="font-size:13px;font-weight:800;color:#34d399;margin-bottom:10px">🔄 進捗を追記する</div><textarea rows="3" id="update-log" placeholder="例：5/20 プレックスから一次通過。" style="background:#0f172a">${esc(state.updateLog)}</textarea><button class="btn-primary btn-green" style="margin-top:8px" onclick="addUpdate()">追記する</button></div>${logs}`;
+    }
+    if(state.fbTab==="fb"){
+      const tmpls=FB_TEMPLATES.map(t=>`<div class="fb-tmpl" onclick="appendFbTemplate('${esc(t)}')">${esc(t)}</div>`).join("");
+      const logs=(c.feedbacks||[]).slice().reverse().map(fb=>`<div class="log-card" style="border-left:4px solid #7c3aed"><div class="log-meta">💬 ${fb.at}　${esc(fb.author||"")}</div><div class="log-text">${esc(fb.text)}</div></div>`).join("")||'<div class="empty-msg">まだFBはありません</div>';
+      return`<div class="card"><div style="font-size:13px;font-weight:800;color:#a78bfa;margin-bottom:10px">💬 フィードバックを追加</div><div class="field"><label style="font-size:12px;color:#94a3b8;margin-bottom:5px;display:block">記入者名</label><input type="text" id="fb-author" value="${esc(state.fbAuthor)}" oninput="state.fbAuthor=this.value;localStorage.setItem('yomi_fb_author',this.value)" placeholder="例：担当者名" style="margin-bottom:10px"></div><div class="hint" style="margin-bottom:6px">テンプレートをタップして追加（複数可）</div><div class="fb-templates">${tmpls}</div><textarea rows="3" id="fb-text" placeholder="FBを入力" oninput="state.fbText=this.value" style="background:#0f172a;margin-bottom:8px">${esc(state.fbText)}</textarea><button class="btn-primary btn-purple" onclick="addFb()">FBを送信する</button></div>${logs}`;
+    }
+  };
+  const tabs=[{id:"detail",label:"📊 診断詳細"},{id:"info",label:"📋 案件情報"},{id:"update",label:`🔄 更新(${c.updates?.length||0})`},{id:"fb",label:`💬 FB(${c.feedbacks?.length||0})`}].map(t=>`<button class="tab-btn ${state.fbTab===t.id?"active":""}" onclick="setTab('${t.id}')">${t.label}</button>`).join("");
+  return`${hdr(`${fd.candidate} ／ ${fd.consultant}`,true)}<div class="score-summary"><div style="max-width:740px;margin:0 auto"><div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">${badge(c.diagnosis?.grade,64)}<div style="flex:1"><div><span style="font-size:26px;font-weight:900;color:#f1f5f9">${c.diagnosis?.totalScore}</span><span style="font-size:13px;color:#64748b"> / 100点</span></div><div style="font-size:13px;color:#94a3b8;margin-top:4px;line-height:1.6">${esc(c.diagnosis?.summary||"")}</div></div></div><div class="priority-box"><div class="priority-label">🚀 最優先アクション</div><div class="priority-text">${esc(c.diagnosis?.topPriority||"")}</div></div></div></div><div class="tabs" style="max-width:740px;margin:0 auto">${tabs}</div><div style="max-width:740px;margin:0 auto;padding:18px 20px 80px">${tabContent()}</div>`;
+}
+
+// ===== ヘルパー =====
+function hdr(title,back=false){return`<div class="header">${back?`<button class="back-btn" onclick="goList()">← 戻る</button>`:""}<div class="header-icon">🎯</div><div><div class="header-title">YOMI精度診断ツール</div><div class="header-sub">${title}</div></div></div>`;}
+function badge(grade,size){const g=GRADE[grade]||GRADE.D;return`<div class="grade-badge" style="width:${size}px;height:${size}px;background:${g.bg};box-shadow:0 2px 14px ${g.bg}55"><span style="font-size:${size*.4}px;font-weight:900;color:#fff;line-height:1">${grade||"?"}</span><span style="font-size:${size*.15}px;color:#ffffffcc">${g.label}</span></div>`;}
+function sbar(score,max,status){return`<div class="score-bar-wrap"><div class="score-bar-row"><span>${score} / ${max}点</span><span style="color:${SC[status]};font-weight:700">${SL[status]}</span></div><div class="score-bar-bg"><div class="score-bar-fill" style="width:${Math.round(score/max*100)}%;background:${SC[status]}"></div></div></div>`;}
+
+// ===== イベント =====
+function goList(){state.view="list";state.updateLog="";state.fbText="";state.openItems={};render()}
+function goNew(){state.form=emptyForm();state.error="";state.view="new";render()}
+function openDetail(id){state.selId=id;state.fbTab="detail";state.openItems={};state.view="detail";render()}
+function setTab(t){state.fbTab=t;render()}
+function toggleItem(i){state.openItems[i]=!state.openItems[i];render()}
+function sf(k,v){state.form[k]=v}
+function st(k,v){state.form.task[k]=v}
+function setCp(i,k,v){state.form.cp[i][k]=v}
+function addCp(){state.form.cp.push({company:"",position:"",route:"",phase:"",expectedSalary:"",naiPct:"",execDate:"",infoDate:""});render()}
+function delCp(i){state.form.cp=state.form.cp.filter((_,j)=>j!==i);render()}
+function toggleC1(n){const a=state.form.c1_consultants;state.form.c1_consultants=a.includes(n)?a.filter(x=>x!==n):[...a,n];render()}
+function toggleC5(n){const a=state.form.c5_checks;state.form.c5_checks=a.includes(n)?a.filter(x=>x!==n):[...a,n];render()}
+function toggleGasSetup(){state.showGasSetup=!state.showGasSetup;render()}
+function saveGasUrl(){const url=document.getElementById("gas-url-input")?.value||"";GAS_URL=url;localStorage.setItem("yomi_gas_url",url);state.gasUrlInput=url;state.showGasSetup=false;render()}
+function openSheet(){window.open("https://docs.google.com/spreadsheets/","_blank")}
+function appendFbTemplate(t){const ta=document.getElementById("fb-text");if(ta){ta.value=ta.value?(ta.value+"　"+t):t;state.fbText=ta.value;}}
+function deleteCase(id){if(!confirm("この案件を削除しますか？"))return;saveCases(state.cases.filter(c=>c.id!==id));if(state.selId===id){state.selId=null;state.view="list";}render();}
+
+async function diagnose(){
+  const f=state.form;
+  if(!f.consultant||!f.candidate||!f.currentCompany||!f.reason||!f.values||!f.proposedCompanies||!f.temperature){state.error="必須項目（*）をすべて入力してください";render();return;}
+  if(!GAS_URL){state.error="GAS URLが設定されていません。一覧画面の「設定」から設定してください。";render();return;}
+  state.error="";state.loading=true;render();
+  try{
+    const id=uid(),createdAt=nowStr();
+    const res=await callGas("diagnose",{id,createdAt,formData:{...f,cp:f.cp.map(p=>({...p})),task:{...f.task},c1_consultants:[...f.c1_consultants],c5_checks:[...f.c5_checks]}});
+    if(!res.ok)throw new Error(res.error||"不明なエラー");
+    const nc={id,createdAt,formData:{...f,cp:f.cp.map(p=>({...p})),task:{...f.task},c1_consultants:[...f.c1_consultants],c5_checks:[...f.c5_checks]},diagnosis:res.diagnosis,updates:[],feedbacks:[]};
+    saveCases([nc,...state.cases]);
+    state.selId=nc.id;state.fbTab="detail";state.openItems={};state.view="detail";
+  }catch(e){state.error="診断中にエラーが発生しました："+e.message;}
+  finally{state.loading=false;render();}
+}
+
+async function addUpdate(){
+  const log=document.getElementById("update-log")?.value||state.updateLog;
+  if(!log.trim())return;
+  const c=state.cases.find(x=>x.id===state.selId);
+  const entry={at:nowStr(),text:log.trim()};
+  saveCases(state.cases.map(x=>x.id===state.selId?{...x,updates:[...(x.updates||[]),entry]}:x));
+  try{await callGas("save_update",{caseId:state.selId,candidateName:c?.formData?.candidate||"",consultant:c?.formData?.consultant||"",...entry});}catch{}
+  state.updateLog="";render();
+}
+
+async function addFb(){
+  const txt=document.getElementById("fb-text")?.value||state.fbText;
+  const author=document.getElementById("fb-author")?.value||state.fbAuthor;
+  if(!txt.trim())return;
+  const c=state.cases.find(x=>x.id===state.selId);
+  const entry={at:nowStr(),author:author.trim(),text:txt.trim()};
+  saveCases(state.cases.map(x=>x.id===state.selId?{...x,feedbacks:[...(x.feedbacks||[]),entry]}:x));
+  try{await callGas("save_fb",{caseId:state.selId,candidateName:c?.formData?.candidate||"",consultant:c?.formData?.consultant||"",...entry});}catch{}
+  state.fbText="";render();
+}
+
+render();
+</script>
+</body>
+</html>
